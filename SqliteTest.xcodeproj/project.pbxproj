@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1774D4AF1C119F77006F952B /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 1774D4AE1C119F77006F952B /* main.c */; };
+		1774D4B91C119FA7006F952B /* sqlite3.c in Sources */ = {isa = PBXBuildFile; fileRef = 1774D4B71C119FA7006F952B /* sqlite3.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +26,9 @@
 /* Begin PBXFileReference section */
 		1774D4AB1C119F77006F952B /* SqliteTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SqliteTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1774D4AE1C119F77006F952B /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		1774D4B51C119FA7006F952B /* sqlite3ext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sqlite3ext.h; path = "../../../../sqlite-amalgamation-3090200/sqlite3ext.h"; sourceTree = "<group>"; };
+		1774D4B61C119FA7006F952B /* sqlite3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sqlite3.h; path = "../../../../sqlite-amalgamation-3090200/sqlite3.h"; sourceTree = "<group>"; };
+		1774D4B71C119FA7006F952B /* sqlite3.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sqlite3.c; path = "../../../../sqlite-amalgamation-3090200/sqlite3.c"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,6 +61,9 @@
 		1774D4AD1C119F77006F952B /* SqliteTest */ = {
 			isa = PBXGroup;
 			children = (
+				1774D4B51C119FA7006F952B /* sqlite3ext.h */,
+				1774D4B61C119FA7006F952B /* sqlite3.h */,
+				1774D4B71C119FA7006F952B /* sqlite3.c */,
 				1774D4AE1C119F77006F952B /* main.c */,
 			);
 			path = SqliteTest;
@@ -119,6 +126,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1774D4AF1C119F77006F952B /* main.c in Sources */,
+				1774D4B91C119FA7006F952B /* sqlite3.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -237,6 +245,7 @@
 				1774D4B41C119F77006F952B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
