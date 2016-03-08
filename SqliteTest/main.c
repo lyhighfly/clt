@@ -198,14 +198,12 @@ int exchange_if_needed(sqlite3* db, char* position)
     //component=sogou.mobile.explorer/.NoDisplayActivity;end
     char* update_sogou_temp[] =  {"update ",launcher_table_name, " set cellX = 2, cellY = 2, screen = ",position,
         " where intent like'%component=sogou.mobile.explorer/.NoDisplayActivity%'"};
-    char** t_update_sogou = update_sogou_temp;
-    const char* update_sogou_position_sql = combinallstring(t_update_sogou, 5);
+    const char* update_sogou_position_sql = combinallstring(&update_sogou_temp, 5);
     printf("update_sogou_position_sql : %s\n", update_sogou_position_sql);
     
     char* get_current_sogou_position_temp[] = {"select screen, cellX, cellY ,_id from ",launcher_table_name,
         " where intent like '%component=sogou.mobile.explorer/.NoDisplayActivity%'"};
-    char** t_get_current_sogou_position = get_current_sogou_position_temp;
-    const char* get_current_sogou_positon_sql = combinallstring(t_get_current_sogou_position, 3);
+    const char* get_current_sogou_positon_sql = combinallstring(&get_current_sogou_position_temp, 3);
     printf("get_concurrent_sogou_positon_sql : %s\n", get_current_sogou_positon_sql);
     
     char** dbresult;
@@ -231,8 +229,7 @@ int exchange_if_needed(sqlite3* db, char* position)
         }
     }
     char* get_specify_position_temp[] = {"select _id from ",launcher_table_name, " where cellX = 2 and cellY = 2 and screen = ", position};
-    char** t_get_specify_position = get_specify_position_temp;
-    const char* get_specify_position_sql = combinallstring(t_get_specify_position, 4);
+    const char* get_specify_position_sql = combinallstring(&get_specify_position_temp, 4);
     printf("get_specify_position_sql : %s\n", get_specify_position_sql);
     
     char *_id;
@@ -258,8 +255,7 @@ int exchange_if_needed(sqlite3* db, char* position)
             }
             char* update_specify_position[] = {"update ",launcher_table_name, " set screen = ", sogou_screen, ", cellX = ", sogou_cellX,
                 ", cellY = ", sogou_cellY, " where _id = ", _id};
-            char** t_update_specify_position = update_specify_position;
-            const char* update_specify_position_sql = combinallstring(t_update_specify_position, 10);
+            const char* update_specify_position_sql = combinallstring(&update_specify_position, 10);
             printf("update_specify_position_sql : %s\n", update_specify_position_sql);
             
             ret1 = sqlite3_exec(db, update_specify_position_sql, NULL, NULL, &errormsg);
@@ -375,8 +371,7 @@ void walk_dir(char *path, int depth)
         }
         int file_type = ent->d_type;
         char* a[] = {current_path, "/", file_name};
-        char** b = a;
-        char* real_path = combinallstring(b, 3);
+        char* real_path = combinallstring(&a, 3);
         
         
         if (file_type == dir_type) {
