@@ -24,6 +24,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		170F244B1C8EDDCC00C002C5 /* main.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = main.h; sourceTree = "<group>"; };
 		1774D4AB1C119F77006F952B /* SqliteTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SqliteTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1774D4AE1C119F77006F952B /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		1774D4B51C119FA7006F952B /* sqlite3ext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sqlite3ext.h; path = "../../../../sqlite-amalgamation-3090200/sqlite3ext.h"; sourceTree = "<group>"; };
@@ -65,6 +66,7 @@
 				1774D4B61C119FA7006F952B /* sqlite3.h */,
 				1774D4B71C119FA7006F952B /* sqlite3.c */,
 				1774D4AE1C119F77006F952B /* main.c */,
+				170F244B1C8EDDCC00C002C5 /* main.h */,
 			);
 			path = SqliteTest;
 			sourceTree = "<group>";

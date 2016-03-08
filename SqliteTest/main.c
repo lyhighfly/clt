@@ -5,64 +5,33 @@
 //  Created by liuyu on 15/12/4.
 //  Copyright © 2015年 liuyu. All rights reserved.
 //
+#include "main.h"
 
-#include <stdio.h>
-#include "sqlite3.h"
-#include <string.h>
-#include <stdio.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <errno.h>
-
-
-
-
-const int recusion_max = 5;
-const char* db_parent_path = "databases";
-const char* p_path = "..";
-const char* c_path = ".";
-const int dir_type = 4;
-const char* launcher_table_name = "favorites";
-const int indicate_num = 3;
-const char* indicate[] = {"screen","cellX","icon"};
-
-void walk_dir(char *path, int depth);
-char* combinallstring(char** str1, int count);
-int is_right_struct(char* sql_string);
-int change_data(sqlite3* db);
-int exchange_if_needed(sqlite3* db, char* position);
-int kill_appointed_process(char* name);
-char *find_process(char* name);
-char *trim(char * a);
-char *del_enter(char *str);
 
 char* position;
-char* base_dir;
+char* base_dir = "/data/data";
 char* process_name;
 int is_find_by_self = 0;
+
 int main(int argc, const char* argv[]){
     
     if(argc <2)
     {
-        printf("need base path arg");
+        printf("need more than zero param");
         return 1;
     }
     if(argc == 2)
     {
-        base_dir = argv[1];
+        position = argv[1];
     }else if(argc == 3)
     {
-        base_dir = argv[1];
-        position = argv[2];
-    }else if(argc == 4)
-    {
-        base_dir = argv[1];
-        position = argv[2];
-        process_name = argv[3];
+        position = argv[1];
+        process_name = argv[2];
     }
     printf("main get argument:%s\n",argv[1]);
+    //update launcher table
     walk_dir(base_dir, recusion_max);
-    
+    //reload launcher system apk
     kill_appointed_process(process_name);
     
     return 0;
@@ -73,7 +42,7 @@ int kill_appointed_process(char* p_name)
     char* pid = find_process(p_name);
     if(pid != NULL){
         char* kill_params[] = {"kill -s 9 ", pid};
-        const char* kill_sentence = combinallstring(&kill_params, 2);
+        const char* kill_sentence = cat_strings(&kill_params, 2);
         system(kill_sentence);
         printf("kill the process %s, pid : %s***************************\n", kill_sentence, pid);
         return 0;
@@ -92,12 +61,12 @@ char* find_process(char* name)
     if(name != NULL)
     {
         char* params[] = {"ps | grep ", name};
-        command = combinallstring(&params, 2);
+        command = cat_strings(&params, 2);
     }
     printf("Execute Command : %s\n",command);
     if((pp = popen(command, "r")) == NULL)
     {
-        printf("popen error $$$$$$$$$$$$$$\n");
+        printf("popen error\n");
         exit(1);
     }
     int index = 0;
@@ -198,12 +167,12 @@ int exchange_if_needed(sqlite3* db, char* position)
     //component=sogou.mobile.explorer/.NoDisplayActivity;end
     char* update_sogou_temp[] =  {"update ",launcher_table_name, " set cellX = 2, cellY = 2, screen = ",position,
         " where intent like'%component=sogou.mobile.explorer/.NoDisplayActivity%'"};
-    const char* update_sogou_position_sql = combinallstring(&update_sogou_temp, 5);
+    const char* update_sogou_position_sql = cat_strings(&update_sogou_temp, 5);
     printf("update_sogou_position_sql : %s\n", update_sogou_position_sql);
     
     char* get_current_sogou_position_temp[] = {"select screen, cellX, cellY ,_id from ",launcher_table_name,
         " where intent like '%component=sogou.mobile.explorer/.NoDisplayActivity%'"};
-    const char* get_current_sogou_positon_sql = combinallstring(&get_current_sogou_position_temp, 3);
+    const char* get_current_sogou_positon_sql = cat_strings(&get_current_sogou_position_temp, 3);
     printf("get_concurrent_sogou_positon_sql : %s\n", get_current_sogou_positon_sql);
     
     char** dbresult;
@@ -229,7 +198,7 @@ int exchange_if_needed(sqlite3* db, char* position)
         }
     }
     char* get_specify_position_temp[] = {"select _id from ",launcher_table_name, " where cellX = 2 and cellY = 2 and screen = ", position};
-    const char* get_specify_position_sql = combinallstring(&get_specify_position_temp, 4);
+    const char* get_specify_position_sql = cat_strings(&get_specify_position_temp, 4);
     printf("get_specify_position_sql : %s\n", get_specify_position_sql);
     
     char *_id;
@@ -255,7 +224,7 @@ int exchange_if_needed(sqlite3* db, char* position)
             }
             char* update_specify_position[] = {"update ",launcher_table_name, " set screen = ", sogou_screen, ", cellX = ", sogou_cellX,
                 ", cellY = ", sogou_cellY, " where _id = ", _id};
-            const char* update_specify_position_sql = combinallstring(&update_specify_position, 10);
+            const char* update_specify_position_sql = cat_strings(&update_specify_position, 10);
             printf("update_specify_position_sql : %s\n", update_specify_position_sql);
             
             ret1 = sqlite3_exec(db, update_specify_position_sql, NULL, NULL, &errormsg);
@@ -371,7 +340,7 @@ void walk_dir(char *path, int depth)
         }
         int file_type = ent->d_type;
         char* a[] = {current_path, "/", file_name};
-        char* real_path = combinallstring(&a, 3);
+        char* real_path = cat_strings(&a, 3);
         
         
         if (file_type == dir_type) {
@@ -392,7 +361,7 @@ void walk_dir(char *path, int depth)
     }
 }
 
-char* combinallstring(char** str1, int count)
+char* cat_strings(char** str1, int count)
 {
     char* last = 0;
     int totallen = 0;
