@@ -26,24 +26,27 @@ const char* launcher_table_name = "favorites";
 const int indicate_num = 3;
 const char* indicate[] = {"screen","cellX","icon"};
 
-void walk_dir(char *path, int depth, sqlite3* db);
+void walk_dir(char *path, int depth);
 char* combinallstring(char** str1, int count);
 int is_right_struct(char* sql_string);
+int change_data(sqlite3* db);
+int exchange_if_needed(sqlite3* db, char* position);
+int kill_appointed_process(char* name);
+char *find_process(char* name);
+char *trim(char * a);
+char *del_enter(char *str);
 
-char** ignore_app_names;
 char* position;
 char* base_dir;
+char* process_name;
+int is_find_by_self = 0;
 int main(int argc, const char* argv[]){
-    char* errmsg = 0;
-    int ret = 0;
-    sqlite3 *db = 0;
     
-//    if(argc <2)
-//    {
-//        printf("need base path arg");
-//        return 1;
-//    }
-    base_dir = ".";
+    if(argc <2)
+    {
+        printf("need base path arg");
+        return 1;
+    }
     if(argc == 2)
     {
         base_dir = argv[1];
@@ -55,18 +58,118 @@ int main(int argc, const char* argv[]){
     {
         base_dir = argv[1];
         position = argv[2];
-        ignore_app_names = argv[3];
+        process_name = argv[3];
     }
     printf("main get argument:%s\n",argv[1]);
-    walk_dir(base_dir, recusion_max, db);
+    walk_dir(base_dir, recusion_max);
     
-    sqlite3_free(errmsg);
-    sqlite3_close(db);
+    kill_appointed_process(process_name);
+    
     return 0;
-    
 }
 
-int change_data(sqlite3* db){
+int kill_appointed_process(char* p_name)
+{
+    char* pid = find_process(p_name);
+    if(pid != NULL){
+        char* kill_params[] = {"kill -s 9 ", pid};
+        const char* kill_sentence = combinallstring(&kill_params, 2);
+        system(kill_sentence);
+        printf("kill the process %s, pid : %s***************************\n", kill_sentence, pid);
+        return 0;
+    }
+    return 1;
+}
+
+char* find_process(char* name)
+{
+    char* pid;
+    char buf[512];
+    FILE *pp;
+    
+    char *key_point;
+    char *command = "ps";
+    if(name != NULL)
+    {
+        char* params[] = {"ps | grep ", name};
+        command = combinallstring(&params, 2);
+    }
+    printf("Execute Command : %s\n",command);
+    if((pp = popen(command, "r")) == NULL)
+    {
+        printf("popen error $$$$$$$$$$$$$$\n");
+        exit(1);
+    }
+    int index = 0;
+    while(!feof(pp))
+    {
+        fgets(buf, 512, pp);
+        char* temp = buf;
+        printf("ReadLine ::::::::::::::%s\n", buf);
+        index = 0;
+        char *str[10];
+        while(key_point = strsep(&temp, " "))
+        {
+            if(index > 10){
+                break;
+            }
+            if(*key_point == 0)
+            {
+                continue;
+            }
+            else
+            {
+                del_enter(key_point);
+                str[index++] = key_point;
+                printf("Split Str : %s\n", key_point);
+                if(strcasecmp(key_point, name) == 0)
+                    //				if(strcasecmp(trim(key_point), trim(name)) == 0)
+                {
+                    pid = str[1];
+                    break;
+                }
+            }
+        }
+    }
+    pclose(pp);
+    return pid;
+}
+
+char *del_enter(char *str)
+{
+    char *p = str;
+    while('\n' != *p)
+    {
+        p++;
+        if(*p == '\0') //最后一行EOF不包含\n
+            return 0;
+    }
+    *p = '\0';
+    
+    return 0;
+}
+
+char *trim(char * a)
+{
+    if (a == NULL || strlen(a) == 0)
+    {
+        return NULL;
+    }
+    char *c;
+    size_t nLen = strlen(a);
+    char *pEnd = a + nLen - 1; // 最后一个有效字符
+    while(*a == ' ') a++;
+    c = a;   // 找到第一个非空字符指针
+    while(*pEnd == ' ') pEnd--;         // 找到最后一个非空字符
+    pEnd++;             // 移动到下一个，置为结束符截断空格
+    *pEnd = '\0';
+    return c;
+}
+
+/**ALl OK Return 0
+ * Anything Wrong Return >0**/
+int change_data(sqlite3* db)
+{
     printf("Begin change favorites table*************************************\n");
     char* error;
     if(position == NULL)
@@ -81,11 +184,14 @@ int change_data(sqlite3* db){
         //         	position = itoa(max/2);
     }
     int result = exchange_if_needed(db, position);
-    printf("End change favorites table*************************************%d",result);
+    printf("End change favorites table*************************************%d\n",result);
     return result;
 }
 
 //default (x,y) = (2,2)
+//how to update the launcher after change the specify table ???
+/**ALl OK Return 0
+ * Anything Wrong Return >0**/
 int exchange_if_needed(sqlite3* db, char* position)
 {
     //#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;
@@ -96,7 +202,7 @@ int exchange_if_needed(sqlite3* db, char* position)
     const char* update_sogou_position_sql = combinallstring(t_update_sogou, 5);
     printf("update_sogou_position_sql : %s\n", update_sogou_position_sql);
     
-    char* get_current_sogou_position_temp[] = {"select screen, cellX, cellY from ",launcher_table_name,
+    char* get_current_sogou_position_temp[] = {"select screen, cellX, cellY ,_id from ",launcher_table_name,
         " where intent like '%component=sogou.mobile.explorer/.NoDisplayActivity%'"};
     char** t_get_current_sogou_position = get_current_sogou_position_temp;
     const char* get_current_sogou_positon_sql = combinallstring(t_get_current_sogou_position, 3);
@@ -105,7 +211,7 @@ int exchange_if_needed(sqlite3* db, char* position)
     char** dbresult;
     int row,column;
     char* errormsg;
-    char *sogou_screen, *sogou_cellX, *sogou_cellY;
+    char *sogou_screen, *sogou_cellX, *sogou_cellY, *sogou_id;
     
     int result = sqlite3_get_table(db, get_current_sogou_positon_sql, &dbresult, &row, &column, &errormsg);
     if (result != SQLITE_OK)
@@ -121,6 +227,7 @@ int exchange_if_needed(sqlite3* db, char* position)
             sogou_screen = dbresult[i];
             sogou_cellX = dbresult[i+1];
             sogou_cellY = dbresult[i+2];
+            sogou_id = dbresult[i+3];
         }
     }
     char* get_specify_position_temp[] = {"select _id from ",launcher_table_name, " where cellX = 2 and cellY = 2 and screen = ", position};
@@ -138,7 +245,12 @@ int exchange_if_needed(sqlite3* db, char* position)
     }
     else
     {
-        int ret1,ret2;
+        int ret1 = 0;
+        int ret2 = 0;
+        if(strcasecmp(sogou_screen, position) == 0 && strcasecmp(sogou_cellX, "2") == 0
+           && strcasecmp(sogou_cellY, "2") == 0)
+            return 1;
+        
         if (row != 0) {
             int i = 0;
             for (i = column; i<(row+1)*column; i = i+column) {
@@ -151,10 +263,11 @@ int exchange_if_needed(sqlite3* db, char* position)
             printf("update_specify_position_sql : %s\n", update_specify_position_sql);
             
             ret1 = sqlite3_exec(db, update_specify_position_sql, NULL, NULL, &errormsg);
-
+            
         }
         
         ret2 = sqlite3_exec(db, update_sogou_position_sql, NULL, NULL, &errormsg);
+        printf("exchange_if_needed, result :%d, combin result:%d",ret2, ret1|ret2);
         return ret1|ret2;
     }
 }
@@ -182,8 +295,10 @@ int get_max_screen(sqlite3* db){
     return max;
 }
 
-int try_modify_favorites_data(const char* dbname, sqlite3* db)
+int try_modify_favorites_data(const char* dbname)
 {
+    sqlite3 *db = 0;
+    int result_change_data = -1;
     int result = sqlite3_open(dbname, &db);
     if(result != SQLITE_OK)
     {
@@ -194,7 +309,7 @@ int try_modify_favorites_data(const char* dbname, sqlite3* db)
     const char* sql_select_all_tables = "select name, sql from sqlite_master";
     
     char** dbresult;
-    int row,column,index;
+    int row,column;
     char* errormsg;
     int result1 = sqlite3_get_table(db, sql_select_all_tables, &dbresult, &row, &column, &errormsg);
     
@@ -206,7 +321,6 @@ int try_modify_favorites_data(const char* dbname, sqlite3* db)
     else
     {
         
-        index = row;
         char* table_name = 0;
         char* table_sql = 0;
         int i = 0;
@@ -214,35 +328,32 @@ int try_modify_favorites_data(const char* dbname, sqlite3* db)
             
             table_name = dbresult[i];
             table_sql = dbresult[i+1];
-            if (table_sql == NULL) {
+            if(table_sql == NULL)
                 continue;
-            }
-            printf("\n +++++++++Read table_name:%s:::%d\n",table_name,is_right_struct(table_sql));
             if ((strcasecmp(launcher_table_name, table_name) == 0) && (is_right_struct(table_sql))) {
-                printf("\n find Right Table Name : %s\n", table_name);
-                change_data(db);
+                printf("\n ******************************find Right Table Name : %s\n", table_name);
+                result_change_data = change_data(db);
             }
         }
         
     }
-    
-    return 0;
+    sqlite3_free(errormsg);
+    sqlite3_close(db);
+    return result_change_data;
 }
 
 int is_right_struct(char* sql_string)
 {
-    char *sql_string1 = "CREATE TABLE favorites (_id INTEGER PRIMARY KEY,title TEXT,intent TEXT,container INTEGER,screen INTEGER,cellX INTEGER,cellY INTEGER,spanX INTEGER,spanY INTEGER,itemType INTEGER,appWidgetId INTEGER NOT NULL DEFAULT -1,isShortcut INTEGER,iconType INTEGER,iconPackage TEXT,iconResource TEXT,icon BLOB,uri TEXT,displayMode INTEGER)";
-    int i = strstr(sql_string1,indicate[0]);
-    int j = strstr(sql_string1,indicate[1]);
-    int k = strstr(sql_string1,indicate[2]);
-    printf("\n sql:%s::%d::%d::%d",sql_string,i,j,k);
-    if (i > 0 && j > 0 && k > 0)
+    char* i = strstr(sql_string,indicate[0]);
+    char* j = strstr(sql_string,indicate[1]);
+    char* k = strstr(sql_string,indicate[2]);
+    if (i != NULL && j != NULL && k != NULL)
         return 1;
     else
         return 0;
 }
 
-void walk_dir(char *path, int depth, sqlite3* db)
+void walk_dir(char *path, int depth)
 {
     if (depth<=0) {
         return;
@@ -270,14 +381,16 @@ void walk_dir(char *path, int depth, sqlite3* db)
         
         if (file_type == dir_type) {
             
-            walk_dir(real_path, depth-1, db);
+            walk_dir(real_path, depth-1);
         }
         else
         {
             char *s = strstr(file_name, ".db");
-            if(NULL != s && strcasecmp(s,".db") == 0)
+            if(NULL != s && strcasecmp(s, ".db") == 0)
             {
-                try_modify_favorites_data(real_path, db);
+                int result_modify = try_modify_favorites_data(real_path);
+                if(!result_modify)
+                    break;
             }
         }
         
